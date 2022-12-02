@@ -1,10 +1,11 @@
-package pg
+package basic
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 
+	"github.com/dwiw96/learning-go/crud-api-postgres/pg"
 	"github.com/dwiw96/learning-go/crud-api-postgres/pkg/models"
 
 	"github.com/jackc/pgconn"
@@ -39,7 +40,7 @@ func (r *PostgresRepository) Create(ctx context.Context, books models.Book) erro
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == "23505" {
-				return ErrDuplicate
+				return pg.ErrDuplicate
 			}
 		}
 		return err
@@ -65,13 +66,27 @@ func (r *PostgresRepository) All(ctx context.Context) ([]models.Book, error) {
 	return all, nil
 }
 
+func (r *PostgresRepository) GetByTitle(ctx context.Context, name string) (*models.Book, error) {
+	row := r.db.QueryRowContext(ctx, "SELECT * FROM books WHERE title=$1", name)
+
+	var book models.Book
+	if err := row.Scan(&book.ID, &book.Title, &book.Author, &book.Release); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pg.ErrNotExist
+		}
+		return nil, err
+	}
+
+	return &book, nil
+}
+
 func (r *PostgresRepository) Update(ctx context.Context, id int, updated models.Book) (*models.Book, error) {
-	res, err := r.db.ExecContext(ctx, "UPDATE crudAPI SET title = $1, author = $2, Release = $3 WHERE id = $4", updated.Title, updated.Author, updated.Release, id)
+	res, err := r.db.ExecContext(ctx, "UPDATE books SET title = $1, author = $2, Release = $3 WHERE id = $4", updated.Title, updated.Author, updated.Release, id)
 	if err != nil {
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == "23505" {
-				return nil, ErrDuplicate
+				return nil, pg.ErrDuplicate
 			}
 		}
 	}
@@ -82,8 +97,24 @@ func (r *PostgresRepository) Update(ctx context.Context, id int, updated models.
 	}
 
 	if rowsAffected == 0 {
-		return nil, ErrUpdateFailed
+		return nil, pg.ErrUpdateFailed
 	}
 
 	return &updated, nil
+}
+
+func (r *PostgresRepository) Delete(ctx context.Context, name string) error {
+	res, err := r.db.ExecContext(ctx, "DELETE FROM books WHERE title=$1", name)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return pg.ErrDeleteFailed
+	}
+	return nil
 }

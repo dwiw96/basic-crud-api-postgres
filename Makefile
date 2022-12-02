@@ -1,5 +1,8 @@
 run:
-	go run cmd/main.go
+	go run cmd/classic/main.go
+
+runMux:
+	go run cmd/mux_pgxpool/main.go
 
 compose:
 	docker compose -f docker-compose.yml up
