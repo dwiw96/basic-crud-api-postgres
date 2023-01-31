@@ -16,7 +16,7 @@ var (
 
 type Repository interface {
 	Migrate(ctx context.Context) error
-	Create(ctx context.Context, books models.Book) error
+	Create(ctx context.Context, books models.Book) (*models.Book, error)
 	All(ctx context.Context) ([]models.Book, error)
 	GetByTitle(ctx context.Context, name string) (*models.Book, error)
 	Update(ctx context.Context, id int, updated models.Book) (*models.Book, error)

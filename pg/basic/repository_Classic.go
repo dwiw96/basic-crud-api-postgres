@@ -34,18 +34,19 @@ func (r *PostgresRepository) Migrate(ctx context.Context) error {
 	return err
 }
 
-func (r *PostgresRepository) Create(ctx context.Context, books models.Book) error {
-	_, err := r.db.QueryContext(ctx, "INSERT INTO books(title, author, release) values($1, $2, $3)", books.Title, books.Author, books.Release)
+func (r *PostgresRepository) Create(ctx context.Context, book models.Book) (*models.Book, error) {
+	var res models.Book
+	err := r.db.QueryRowContext(ctx, "INSERT INTO books(title, author, release) values($1, $2, $3) RETURNING id, title, author, release", book.Title, book.Author, book.Release).Scan(&res.ID, &res.Title, &res.Author, &res.Release)
 	if err != nil {
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == "23505" {
-				return pg.ErrDuplicate
+				return nil, pg.ErrDuplicate
 			}
 		}
-		return err
+		return nil, err
 	}
-	return nil
+	return &res, nil
 }
 
 func (r *PostgresRepository) All(ctx context.Context) ([]models.Book, error) {

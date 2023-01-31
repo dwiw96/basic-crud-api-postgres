@@ -22,7 +22,7 @@ func main() {
 
 	dbRepo := pgx.NewPostgresRepositoryPGX(dbpool)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
 	defer cancel()
 
 	handlers.AddRepo(ctx, dbRepo)

@@ -34,18 +34,19 @@ func (r *PostgresRepositoryPGX) Migrate(ctx context.Context) error {
 	return err
 }
 
-func (r *PostgresRepositoryPGX) Create(ctx context.Context, book models.Book) error {
-	_, err := r.db.Exec(ctx, "INSERT INTO books(title, author, release) VALUES($1, $2, $3)", book.Title, book.Author, book.Release)
+func (r *PostgresRepositoryPGX) Create(ctx context.Context, book models.Book) (*models.Book, error) {
+	var res models.Book
+	err := r.db.QueryRow(ctx, "INSERT INTO books(title, author, release) VALUES($1, $2, $3) RETURNING id, title, author, release", book.Title, book.Author, book.Release).Scan(&res.ID, &res.Title, &res.Author, &res.Release)
 	if err != nil {
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == "23505" {
-				return pg.ErrDuplicate
+				return nil, pg.ErrDuplicate
 			}
 		}
-		return err
+		return nil, err
 	}
-	return err
+	return &res, err
 }
 
 func (r *PostgresRepositoryPGX) All(ctx context.Context) ([]models.Book, error) {
@@ -87,7 +88,7 @@ func (r *PostgresRepositoryPGX) Update(ctx context.Context, id int, book models.
 		var pgxError *pgconn.PgError
 		if errors.As(err, &pgxError) {
 			if pgxError.Code == "23505" {
-				return nil, pg.ErrNotExist
+				return nil, pg.ErrDuplicate
 			}
 		}
 		return nil, err

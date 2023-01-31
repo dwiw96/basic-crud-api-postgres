@@ -14,56 +14,56 @@ func RunMigrate(ctx context.Context, pgRepo pg.Repository) {
 	fmt.Println("MIGRATE RUN")
 
 	if err := pgRepo.Migrate(ctx); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	fmt.Println("MIGRATE DONE!")
 }
 
-func RunCreate(ctx context.Context, pgRepo pg.Repository) {
+func RunCreate(ctx context.Context, pgRepo pg.Repository, book models.Book) *models.Book {
 	fmt.Println("INSERT DATA RUN")
-	err := pgRepo.Create(ctx, models.Book1)
+	res, err := pgRepo.Create(ctx, book)
 	if errors.Is(err, pg.ErrDuplicate) {
-		fmt.Printf("record: %+v already exist\n", models.Book1)
+		fmt.Printf("record: %+v already exist\n", book)
 	} else if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	fmt.Println("DATA INSERTED!")
+	return res
 }
 
 func RunAll(ctx context.Context, pgRepo pg.Repository) []models.Book {
 	fmt.Println("GET ALL RUN")
 	all, err := pgRepo.All(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	return all
 }
 
-func RunGetByTitle(ctx context.Context, pgRepo pg.Repository) *models.Book {
+func RunGetByTitle(ctx context.Context, pgRepo pg.Repository, title string) *models.Book {
 	fmt.Println("GET BY TITLE RUN")
-	data, err := pgRepo.GetByTitle(ctx, "Math")
+	data, err := pgRepo.GetByTitle(ctx, title)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	return data
 }
 
-func RunUpdate(ctx context.Context, pgRepo pg.Repository) *models.Book {
+func RunUpdate(ctx context.Context, pgRepo pg.Repository, id int, book models.Book) *models.Book {
 	fmt.Println("UPDATE RUN")
-	//var updateRecord = models.Book{Release: 2022}
-	data, err := pgRepo.Update(ctx, 1, models.Book2)
+	data, err := pgRepo.Update(ctx, id, book)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	return data
 }
 
-func RunDelete(ctx context.Context, pgRepo pg.Repository) {
+func RunDelete(ctx context.Context, pgRepo pg.Repository, title string) {
 	fmt.Println("DELETE RUN")
-	err := pgRepo.Delete(ctx, "Math")
+	err := pgRepo.Delete(ctx, title)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }
