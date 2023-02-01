@@ -20,6 +20,16 @@ func main() {
 	}
 	defer dbpool.Close()
 
+	for {
+		if err := dbpool.Ping(context.Background()); err != nil {
+			log.Printf("got error pinging pool, trying again in 10ms\n")
+			log.Fatal("error = ", err)
+			time.Sleep(10 * time.Millisecond)
+		}
+		log.Println("PING SUCCESS")
+		break
+	}
+
 	dbRepo := pgx.NewPostgresRepositoryPGX(dbpool)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
